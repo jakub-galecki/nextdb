@@ -5,22 +5,45 @@ class UndefinedParam extends Error {
     }
 }
 
-class DeleteFromEmpty extends Error{
+class DeleteFromEmpty extends Error {
     constructor(m: string) {
         super(m);
         this.name = "DeleteFromEmpty";
     }
 }
 
-class KeyNotFound extends Error{
+class KeyNotFound extends Error {
     constructor(m: string) {
         super(m);
-        this.name="KeyNotFound"
+        this.name = "KeyNotFound"
     }
 }
 
+class DbNotFound extends Error {
+    constructor(m: string) {
+        super(m);
+        this.name = "DbNotFound";
+    }
+}
+
+class DbExists extends Error {
+    constructor(m: string) {
+        super(m);
+        this.name = "DbAlreadyExists";
+    }
+}
+
+class EmptyString extends Error {
+    constructor(m: string) {
+        super(m);
+        this.name="EmptyString"
+    }
+}
 export {
     UndefinedParam,
     DeleteFromEmpty,
-    KeyNotFound
+    KeyNotFound,
+    DbNotFound,
+    DbExists,
+    EmptyString
 }
