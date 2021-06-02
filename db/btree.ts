@@ -51,7 +51,6 @@ export class BTree {
                 this.insertNonFull(r, dataToInsert);
             }
         }
-
     }
 
     print(x: BTreeNode = this.root): void {
@@ -60,7 +59,7 @@ export class BTree {
             if (!x.leaf) {
                 this.print(x.c[i]);
             }
-            console.log(x.data[i].value);
+            console.log("%v: %v",x.data[i].key, x.data[i].value);
         }
 
         if (x.leaf == false) {
