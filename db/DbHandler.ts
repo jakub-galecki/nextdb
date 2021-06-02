@@ -35,4 +35,8 @@ export class DbHandler implements DbInterface {
           const b = new BTree(dbname);
           await this.fhandler.createNewDbFile(b, dbname);
      }
+
+     async deleteDatabase(dbname: string): Promise<void> {
+          await this.fhandler.deleteDbFile(dbname);
+     }
 }

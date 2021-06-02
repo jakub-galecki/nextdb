@@ -11,7 +11,7 @@ export class DbFileHandler {
         const backup = new Backup();
         if (exists('./databases/'.concat(fname))) {
             backup.makeBackup(fname).then(async () => {
-                return writeJson('./databases/'.concat(fname), db);
+                await writeJson('./databases/'.concat(fname), db);
             });
         } else {
             throw new DbNotFound("Error while saving database file: could not find the database " + fname);
@@ -54,10 +54,10 @@ export class DbFileHandler {
 
     async deleteDbFile(fname: string): Promise<void> {
         fname = this.prepareFile(fname);
-        if (!exists('./databases/'.concat(fname))) {
+        if (exists('./databases/'.concat(fname))) {
             return Deno.remove('./databases/'.concat(fname));
         } else {
-            throw new DbExists("Error while deleting db file: db with the name " + fname + " already exists.");
+            throw new DbExists("Error while deleting db file: db with the name " + fname + " does not exists.");
         }
     }
 }
