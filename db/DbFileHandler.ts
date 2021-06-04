@@ -7,7 +7,7 @@ import {Backup} from "./Backup.ts";
 
 export class DbFileHandler {
     async saveDbToFile(db: BTree, fname: string): Promise<void> {
-        fname = this.prepareFile(fname);
+        fname = DbFileHandler.prepareFile(fname);
         const backup = new Backup();
         if (exists('./databases/'.concat(fname))) {
             backup.makeBackup(fname).then(async () => {
@@ -18,7 +18,7 @@ export class DbFileHandler {
         }
     }
 
-    private prepareFile(fname: string): string {
+    private static prepareFile(fname: string): string {
         if (!(fname.length === 0)) {
             const jsonRegex: RegExp = new RegExp('.*\.json$');
             if (!jsonRegex.test(fname)) {
@@ -31,7 +31,7 @@ export class DbFileHandler {
     }
 
     async readDbFromFile(fname: string): Promise<BTree> {
-        fname = this.prepareFile(fname);
+        fname = DbFileHandler.prepareFile(fname);
         if (exists('./databases/'.concat(fname))) {
             return plainToClass(BTree, readJsonSync('./databases/'.concat(fname)));
         } else {
@@ -40,7 +40,7 @@ export class DbFileHandler {
     }
 
     async createNewDbFile(db: BTree, fname: string): Promise<void> {
-        fname = this.prepareFile(fname);
+        fname = DbFileHandler.prepareFile(fname);
         exists('./databases/'.concat(fname)).then(async (exist) => {
             if (!exist) {
                 ensureFile('./databases/'.concat(fname)).then(async () => {
@@ -53,7 +53,7 @@ export class DbFileHandler {
     }
 
     async deleteDbFile(fname: string): Promise<void> {
-        fname = this.prepareFile(fname);
+        fname = DbFileHandler.prepareFile(fname);
         if (exists('./databases/'.concat(fname))) {
             return Deno.remove('./databases/'.concat(fname));
         } else {

@@ -1,5 +1,4 @@
-import {DbHandler} from "./db/DbHandler.ts";
+import {Parser} from "./db/Parser.ts";
 
-const handler: DbHandler = new DbHandler();
-const texxt = Deno.readTextFileSync('./databases/testing.json');
-console.log(texxt);
+const p = new Parser();
+console.log(p.parse("testing.insert"));
