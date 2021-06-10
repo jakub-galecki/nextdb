@@ -1,9 +1,11 @@
 import {BTree} from "./btree.ts";
 import {readJsonSync, writeJson} from "https://deno.land/std@0.67.0/fs/mod.ts";
-import {plainToClass} from "https://jspm.dev/class-transformer@0.2.3";
+import {plainToClass} from "https://jspm.dev/class-transformer";
 import {ensureFile, exists} from "https://deno.land/std@0.97.0/fs/mod.ts";
 import {DbExists, DbNotFound, EmptyString} from "./Error.ts";
 import {Backup} from "./Backup.ts";
+import {BTreeNode} from "./btreeNode.ts";
+import {Data} from "./data.ts";
 
 export class DbFileHandler {
     async saveDbToFile(db: BTree, fname: string): Promise<void> {
@@ -31,12 +33,21 @@ export class DbFileHandler {
     }
 
     async readDbFromFile(fname: string): Promise<BTree> {
-        fname = DbFileHandler.prepareFile(fname);
-        if (exists('./databases/'.concat(fname))) {
-            return plainToClass(BTree, readJsonSync('./databases/'.concat(fname)));
-        } else {
-            throw new DbNotFound("Error while reading database file: could not find the database " + fname);
-        }
+        return new Promise(function(resolve, reject) {
+            fname = DbFileHandler.prepareFile(fname);
+            if (exists('./databases/'.concat(fname))) {
+                let tree: BTree = plainToClass(BTree, readJsonSync('./databases/'.concat(fname)));
+                if(tree.root !== null){
+                    let newRoot: BTreeNode = plainToClass(BTreeNode, tree.root,{ excludeExtraneousValues: true });
+                    console.log(newRoot)
+                }
+                resolve(tree);
+                reject(new Error());
+            } else {
+                throw new DbNotFound("Error while reading database file: could not find the database " + fname);
+            }
+
+        });
     }
 
     async createNewDbFile(db: BTree, fname: string): Promise<void> {

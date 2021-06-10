@@ -72,7 +72,7 @@ export class BTree {
             throw new DeleteFromEmpty("Trying to delete key " + key + " from empty tree");
         }
 
-        await this.root.delete(key);
+        await this.root.deleteKey(key);
 
         if (this.root.n === 0) {
             if (this.root.leaf) {

@@ -6,13 +6,14 @@
 import {KeyNotFound, UndefinedParam} from './Error.ts';
 import {Globals} from "./globals.ts";
 import {Data} from "./data.ts";
+import { Expose } from 'https://jspm.dev/class-transformer';
 
 class BTreeNode {
-    globals: Globals = new Globals();
-    n: number;
-    leaf: boolean;
-    c: BTreeNode[] = [];
-    data: Data[] = [];
+    @Expose() globals: Globals = new Globals();
+    @Expose() n: number;
+    @Expose() leaf: boolean;
+    @Expose() c: BTreeNode[] = [];
+    @Expose() data: Data[] = [];
 
     constructor(n: number, leaf: boolean) {
         if (n !== undefined && leaf !== undefined) {
@@ -23,14 +24,14 @@ class BTreeNode {
         }
     }
 
-    delete(key: number): void {
+    async deleteKey(key: number): Promise<void> {
         let i = this.findInTree(key);
 
         if (this.n > i && this.data[i].key == key) {
             if (this.leaf) {
-                this.deleteFromLeaf(i);
+                await this.deleteFromLeaf(i);
             } else {
-                this.deleteFromNonLeaf(i);
+                await this.deleteFromNonLeaf(i);
             }
         } else {
             if (this.leaf) {
@@ -43,9 +44,9 @@ class BTreeNode {
             }
 
             if (end && i > this.n) {
-                this.c[i - 1].delete(key);
+                await this.c[i - 1].deleteKey(key);
             } else {
-                this.c[i].delete(key);
+                await this.c[i].deleteKey(key);
             }
         }
     }
@@ -57,20 +58,20 @@ class BTreeNode {
         this.n -= 1;
     }
 
-    private deleteFromNonLeaf(i: number): void {
+    private async  deleteFromNonLeaf(i: number): Promise<void> {
         let k: Data = this.data[i];
 
         if (this.c[i].n >= this.globals.t) {
             const pred: Data = this.getPredecessor(i);
             this.data[i] = pred;
-            this.c[i].delete(pred.key);
+            await this.c[i].deleteKey(pred.key);
         } else if (this.c[i + 1].n >= this.globals.t) {
             const succ: Data = this.getSuccessor(i);
             this.data[i] = succ;
-            this.c[i + 1].delete(succ.key);
+            await this.c[i + 1].deleteKey(succ.key);
         } else {
             this.merge(i);
-            this.c[i].delete(k.key);
+            await this.c[i].deleteKey(k.key);
         }
     }
 
