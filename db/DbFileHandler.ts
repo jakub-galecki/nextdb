@@ -33,21 +33,12 @@ export class DbFileHandler {
     }
 
     async readDbFromFile(fname: string): Promise<BTree> {
-        return new Promise(function(resolve, reject) {
-            fname = DbFileHandler.prepareFile(fname);
-            if (exists('./databases/'.concat(fname))) {
-                let tree: BTree = plainToClass(BTree, readJsonSync('./databases/'.concat(fname)));
-                if(tree.root !== null){
-                    let newRoot: BTreeNode = plainToClass(BTreeNode, tree.root,{ excludeExtraneousValues: true });
-                    console.log(newRoot)
-                }
-                resolve(tree);
-                reject(new Error());
-            } else {
-                throw new DbNotFound("Error while reading database file: could not find the database " + fname);
-            }
-
-        });
+        fname = DbFileHandler.prepareFile(fname);
+        if (exists('./databases/'.concat(fname))) {
+             return plainToClass(BTree, readJsonSync('./databases/'.concat(fname)));
+        } else {
+            throw new DbNotFound("Error while reading database file: could not find the database " + fname);
+        }
     }
 
     async createNewDbFile(db: BTree, fname: string): Promise<void> {
