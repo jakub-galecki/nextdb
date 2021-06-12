@@ -72,7 +72,7 @@ export class BTree {
             throw new DeleteFromEmpty("Trying to delete key " + key + " from empty tree");
         }
 
-        await this.root.deleteKey(key);
+        await this.deleteFromTree(this.root, key);
 
         if (this.root.n === 0) {
             if (this.root.leaf) {
@@ -83,6 +83,59 @@ export class BTree {
             }
         }
     }
+
+    deleteFromTree(treeNode: BTreeNode,key: number): void {
+        let i = findInTree(treeNode, key);
+
+        if (treeNode.n > i && treeNode.data[i].key == key) {
+            if (tree.leaf) {
+                treeNode.deleteFromLeaf(i);
+            } else {
+                treeNode.deleteFromNonLeaf(i);
+            }
+        } else {
+            if (treeNode.leaf) {
+                throw new KeyNotFound("Error in delete: could not find the key " + key + " in the tree");
+            }
+            const end = i === this.n;
+
+            if (treeNode.c[i].n < treeNode.globals.t) {
+                fill(treeNode, i);
+            }
+
+            if (end && i > treeNode.n) {
+                deleteFromTree(treeNode.c[i - 1], key);
+            } else {
+                deleteFromTree(treeNode.c[i],key);
+
+            }
+        }
+    }
+
+
+      private deleteFromNonLeaf(i: number): void {
+            let k: Data = this.data[i];
+
+            if (this.c[i].n >= this.globals.t) {
+                const pred: Data = this.getPredecessor(i);
+                this.data[i] = pred;
+                this.c[i].delete(pred.key);
+            } else if (this.c[i + 1].n >= this.globals.t) {
+                const succ: Data = this.getSuccessor(i);
+                this.data[i] = succ;
+                this.c[i + 1].delete(succ.key);
+            } else {
+                this.merge(i);
+                this.c[i].delete(k.key);
+            }
+        }
+
+      private deleteFromLeaf(treeNode: BTreeNode, i: number): void {
+          for (let j = i + 1; j < treeNode.n; j++) {
+              treeNode.data[j - 1] = treeNode.data[j];
+          }
+          treeNode.n -= 1;
+      }
 
     splitChild(x: BTreeNode, i: number, y: BTreeNode): void {
         let t = this.globals.t
@@ -108,6 +161,125 @@ export class BTree {
         x.data[i] = y.data[t - 1];
         x.n = x.n + 1;
     }
+
+        private getSuccessor(treeNode: BTreeNode,i: number): Data {
+            let current = treeNode.c[i + 1];
+            while (!current.leaf) {
+                current = current.c[0];
+            }
+            return current.data[0];
+        }
+
+        private getPredecessor(treeNode: BTreeNode,i: number): Data {
+            let current = treeNode.c[i];
+            while (!current.leaf) {
+                current = current.c[current.n];
+            }
+            return current.data[current.n - 1];
+        }
+
+        private fill(treeNode: BTreeNode,i: number): void {
+            if (i != 0 && treeNode.c[i - 1].n >= treeNode.globals.t) {
+                borrowFromPrevious(treeNode,i);
+            } else if (i != treeNode.n && treeNode.c[i + 1].n >= treeNode.globals.t) {
+                borrowFromNext(treeNode, i);
+            } else {
+                if (i != treeNode.n) {
+                    merge(treeNode,i);
+                } else {
+                    merge(treeNode,i - 1);
+                }
+            }
+        }
+
+        private borrowFromPrevious(treeNode: BTreeNode,i: number): void {
+            let child = treeNode.c[i];
+            let sib = treeNode.c[i - 1];
+
+            for (let j = child.n - 1; j >= 0; j--) {
+                child.data[j + 1] = child.data[j];
+            }
+
+            if (!child.leaf) {
+                for (let j = child.n; j >= 0; j--) {
+                    child.c[j + 1] = child.c[j];
+                }
+            }
+
+            child.data[0] = treeNode.data[i - 1];
+
+            if (!child.leaf) {
+                child.c[0] = sib.c[sib.n - 1];
+            }
+
+            treeNode.data[i - 1] = sib.data[sib.n - 1];
+
+            child.n += 1;
+            sib.n -= 1;
+        }
+
+        private borrowFromNext(treeNode: BTreeNode,i: number): void {
+            let child = treeNode.c[i];
+            let sib = treeNode.c[i + 1];
+
+            child.data[child.n] = treeNode.data[i];
+
+            if (!child.leaf) {
+                child.c[child.n + 1] = sib.c[0];
+            }
+
+            treeNode.data[i] = sib.data[0];
+
+            for (let j = 1; j < sib.n; i++) {
+                sib.data[j - 1] = sib.data[j];
+            }
+
+            if (!sib.leaf) {
+                for (let j = 1; j <= sib.n; j++) {
+                    sib.c[j - 1] = sib.c[j];
+                }
+            }
+
+            child.n += 1;
+            sib.n -= 1;
+        }
+
+        private merge(treeNode: BTreeNode,i: number): void {
+            let child = treeNode.c[i];
+            let sib = treeNode.c[i + 1];
+
+            child.data[treeNode.globals.t - 1] = treeNode.data[i];
+
+            for (let j = 0; j < sib.n; j++) {
+                child.data[j + treeNode.globals.t] = sib.data[j];
+            }
+
+            if (!child.leaf) {
+                for (let j = 0; j <= sib.n; j++) {
+                    child.c[j + treeNode.globals.t] = sib.c[j];
+                }
+            }
+
+            for (let j = i + 1; j < treeNode.n; j++) {
+                treeNode.data[j - 1] = treeNode.data[j];
+            }
+
+            for (let j = i + 2; j <= treeNode.n; j++) {
+                treeNode.c[j - 1] = treeNode.c[j];
+            }
+
+            child.n += sib.n + 1;
+            treeNode.n -= 1;
+        }
+
+        private findInTree(treeNode: BTreeNode,key: number): number {
+            let i = 0;
+            while (i < treeNode.n && key > treeNode.data[i].key) {
+                i += 1;
+            }
+            return i;
+        }
+
 
      insertNonFull(x: BTreeNode, d: Data) {
         let i = x.n - 1;
