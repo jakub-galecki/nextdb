@@ -5,9 +5,7 @@
 import {BTreeNode} from "./btreeNode.ts";
 import {Globals} from "./globals.ts"
 import {Data} from "./data.ts";
-import {DeleteFromEmpty} from './Error.ts';
-
-
+import {DeleteFromEmpty, KeyNotFound} from './Error.ts';
 
 export class BTree {
     fname: string;
@@ -85,48 +83,48 @@ export class BTree {
     }
 
     deleteFromTree(treeNode: BTreeNode,key: number): void {
-        let i = findInTree(treeNode, key);
+        let i = this.findInTree(treeNode, key);
 
         if (treeNode.n > i && treeNode.data[i].key == key) {
-            if (tree.leaf) {
-                treeNode.deleteFromLeaf(i);
+            if (treeNode.leaf) {
+                this.deleteFromLeaf(treeNode, i);
             } else {
-                treeNode.deleteFromNonLeaf(i);
+                this.deleteFromNonLeaf(treeNode, i);
             }
         } else {
             if (treeNode.leaf) {
                 throw new KeyNotFound("Error in delete: could not find the key " + key + " in the tree");
             }
-            const end = i === this.n;
+            const end = i === treeNode.n;
 
             if (treeNode.c[i].n < treeNode.globals.t) {
-                fill(treeNode, i);
+                this.fill(treeNode, i);
             }
 
             if (end && i > treeNode.n) {
-                deleteFromTree(treeNode.c[i - 1], key);
+                this.deleteFromTree(treeNode.c[i - 1], key);
             } else {
-                deleteFromTree(treeNode.c[i],key);
+                this.deleteFromTree(treeNode.c[i],key);
 
             }
         }
     }
 
 
-      private deleteFromNonLeaf(i: number): void {
-            let k: Data = this.data[i];
+      private deleteFromNonLeaf(treeNode: BTreeNode,i: number): void {
+            let k: Data = treeNode.data[i];
 
-            if (this.c[i].n >= this.globals.t) {
-                const pred: Data = this.getPredecessor(i);
-                this.data[i] = pred;
-                this.c[i].delete(pred.key);
-            } else if (this.c[i + 1].n >= this.globals.t) {
-                const succ: Data = this.getSuccessor(i);
-                this.data[i] = succ;
-                this.c[i + 1].delete(succ.key);
+                const pred: Data = this.getPredecessor(treeNode, i);
+                if (treeNode.c[i].n >= treeNode.globals.t) {
+                treeNode.data[i] = pred;
+                this.deleteFromTree(treeNode.c[i],pred.key);
+            } else if (treeNode.c[i + 1].n >= treeNode.globals.t) {
+                const succ: Data = this.getSuccessor(treeNode, i);
+                treeNode.data[i] = succ;
+                this.deleteFromTree(treeNode.c[i + 1],succ.key);
             } else {
-                this.merge(i);
-                this.c[i].delete(k.key);
+                this.merge(treeNode,i);
+                this.deleteFromTree(treeNode.c[i], k.key);
             }
         }
 
@@ -180,14 +178,14 @@ export class BTree {
 
         private fill(treeNode: BTreeNode,i: number): void {
             if (i != 0 && treeNode.c[i - 1].n >= treeNode.globals.t) {
-                borrowFromPrevious(treeNode,i);
+                this.borrowFromPrevious(treeNode,i);
             } else if (i != treeNode.n && treeNode.c[i + 1].n >= treeNode.globals.t) {
-                borrowFromNext(treeNode, i);
+                this.borrowFromNext(treeNode, i);
             } else {
                 if (i != treeNode.n) {
-                    merge(treeNode,i);
+                    this.merge(treeNode,i);
                 } else {
-                    merge(treeNode,i - 1);
+                    this.merge(treeNode,i - 1);
                 }
             }
         }
