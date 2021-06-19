@@ -17,38 +17,44 @@ export class BTree {
         this.fname = fname;
     }
 
-    async search(k: number, x: BTreeNode = this.root): Promise<string> {
+    search(k: number, x: BTreeNode = this.root): Promise<string> {
         let i = 0;
         while (i < x.n && k > x.data[i].key) {
             i = i + 1;
         }
         if (i < x.n && k == x.data[i].key) {
-            return x.data[i].value;
+            return new Promise((resolve) => {
+               resolve(x.data[i].value);
+            });
         } else if (x.leaf) {
-            return ""; // throw error
+            return Promise.resolve(""); // TODO: reject. 
         }
         return this.search(k, x.c[i]);
     }
 
-    async insert(key: number, value: string): Promise<void> {
-        const dataToInsert = new Data(key, value);
-        if (this.root === null) {
-            this.root = new BTreeNode(0, true);
-            this.root.data[0] = dataToInsert;
-            this.root.n += 1;
-        } else {
-            const r = this.root;
-            const {n} = this.root;
-            if (n === (2 * this.globals.t) - 1) {
-                const s = new BTreeNode(0, false);
-                this.root = s;
-                s.c[0] = r;
-                this.splitChild(s, 0, r);
-                this.insertNonFull(s, dataToInsert);
+    insert(key: number, value: string): Promise<void> {
+        return new Promise((resolve) => {
+            const dataToInsert = new Data(key, value);
+            if (this.root === null) {
+                this.root = new BTreeNode(0, true);
+                this.root.data[0] = dataToInsert;
+                this.root.n += 1;
             } else {
-                this.insertNonFull(r, dataToInsert);
+                const r = this.root;
+                const {n} = this.root;
+                if (n === (2 * this.globals.t) - 1) {
+                    const s = new BTreeNode(0, false);
+                    this.root = s;
+                    s.c[0] = r;
+                    this.splitChild(s, 0, r);
+                    this.insertNonFull(s, dataToInsert);
+                } else {
+                    this.insertNonFull(r, dataToInsert);
+                }
             }
-        }
+            resolve();
+        });
+
     }
 
     print(x: BTreeNode = this.root): void {
@@ -65,25 +71,28 @@ export class BTree {
         }
     }
 
-    async delete(key: number): Promise<void> {
-        if (this.root == null) {
-            throw new DeleteFromEmpty("Trying to delete key " + key + " from empty tree");
-        }
-
-        await this.deleteFromTree(this.root, key);
-
-        if (this.root.n === 0) {
-            if (this.root.leaf) {
-                // @ts-ignore
-                this.root = null;
-            } else {
-                this.root = this.root.c[0];
+    delete(key: number): Promise<void> {
+        return new Promise((resolve, reject) => {
+            if (this.root == null) {
+                   reject(new DeleteFromEmpty("Trying to delete key " + key + " from empty tree")); 
             }
-        }
+
+            this.deleteFromTree(this.root, key);
+
+            if (this.root.n === 0) {
+                if (this.root.leaf) {
+                    // @ts-ignore
+                    this.root = null;
+                } else {
+                    this.root = this.root.c[0];
+                }
+            }
+            resolve();
+        });
     }
 
     deleteFromTree(treeNode: BTreeNode,key: number): void {
-        let i = this.findInTree(treeNode, key);
+        const i = this.findInTree(treeNode, key);
 
         if (treeNode.n > i && treeNode.data[i].key == key) {
             if (treeNode.leaf) {
@@ -112,7 +121,7 @@ export class BTree {
 
 
     private deleteFromNonLeaf(treeNode: BTreeNode,i: number): void {
-        let k: Data = treeNode.data[i];
+        const k: Data = treeNode.data[i];
 
         if (treeNode.c[i].n >= treeNode.globals.t) {
             const pred: Data = this.getPredecessor(treeNode, i);
@@ -136,8 +145,8 @@ export class BTree {
     }
 
     splitChild(x: BTreeNode, i: number, y: BTreeNode): void {
-        let t = this.globals.t
-        let z = new BTreeNode(t - 1, y.leaf);
+        const t = this.globals.t
+        const z = new BTreeNode(t - 1, y.leaf);
         // y = x.c[i]; ?
         for (let j = 0; j < t - 1; j++) {
             z.data[j] = y.data[j + t];
@@ -191,8 +200,8 @@ export class BTree {
     }
 
     private borrowFromPrevious(treeNode: BTreeNode,i: number): void {
-        let child = treeNode.c[i];
-        let sib = treeNode.c[i - 1];
+        const child = treeNode.c[i];
+        const sib = treeNode.c[i - 1];
 
         for (let j = child.n - 1; j >= 0; j--) {
             child.data[j + 1] = child.data[j];
@@ -217,8 +226,8 @@ export class BTree {
     }
 
     private borrowFromNext(treeNode: BTreeNode,i: number): void {
-        let child = treeNode.c[i];
-        let sib = treeNode.c[i + 1];
+        const child = treeNode.c[i];
+        const sib = treeNode.c[i + 1];
 
         child.data[child.n] = treeNode.data[i];
 
@@ -243,8 +252,8 @@ export class BTree {
     }
 
     private merge(treeNode: BTreeNode,i: number): void {
-        let child = treeNode.c[i];
-        let sib = treeNode.c[i + 1];
+        const child = treeNode.c[i];
+        const sib = treeNode.c[i + 1];
 
         child.data[treeNode.globals.t - 1] = treeNode.data[i];
 

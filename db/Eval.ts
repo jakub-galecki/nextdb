@@ -1,12 +1,12 @@
 import {Request} from "./Request.ts";
 import {Response} from "./Response.ts";
-import {EvalError} from "./Error.ts";
+// import {EvalError} from "./Error.ts";
 import {DbHandler} from "./DbHandler.ts";
 
 export class Evaluator {
     async evaluate(req: Request): Promise<Response> {
         let resMessage: string;
-        let found: string = '';
+        let found = '';
         if(req.isValid()){
             try {
                 const handler: DbHandler = new DbHandler();
