@@ -17,44 +17,38 @@ export class BTree {
         this.fname = fname;
     }
 
-    search(k: number, x: BTreeNode = this.root): Promise<string> {
+    search(k: number, x: BTreeNode = this.root): string {
         let i = 0;
         while (i < x.n && k > x.data[i].key) {
             i = i + 1;
         }
         if (i < x.n && k == x.data[i].key) {
-            return new Promise((resolve) => {
-               resolve(x.data[i].value);
-            });
+            return x.data[i].value;
         } else if (x.leaf) {
-            return Promise.resolve(""); // TODO: reject. 
+            return ""; // TODO: reject.
         }
         return this.search(k, x.c[i]);
     }
 
-    insert(key: number, value: string): Promise<void> {
-        return new Promise((resolve) => {
-            const dataToInsert = new Data(key, value);
-            if (this.root === null) {
-                this.root = new BTreeNode(0, true);
-                this.root.data[0] = dataToInsert;
-                this.root.n += 1;
+    insert(key: number, value: string): void {
+        const dataToInsert = new Data(key, value);
+        if (this.root === null) {
+            this.root = new BTreeNode(0, true);
+            this.root.data[0] = dataToInsert;
+            this.root.n += 1;
+        } else {
+            const r = this.root;
+            const {n} = this.root;
+            if (n === (2 * this.globals.t) - 1) {
+                const s = new BTreeNode(0, false);
+                this.root = s;
+                s.c[0] = r;
+                this.splitChild(s, 0, r);
+                this.insertNonFull(s, dataToInsert);
             } else {
-                const r = this.root;
-                const {n} = this.root;
-                if (n === (2 * this.globals.t) - 1) {
-                    const s = new BTreeNode(0, false);
-                    this.root = s;
-                    s.c[0] = r;
-                    this.splitChild(s, 0, r);
-                    this.insertNonFull(s, dataToInsert);
-                } else {
-                    this.insertNonFull(r, dataToInsert);
-                }
+                this.insertNonFull(r, dataToInsert);
             }
-            resolve();
-        });
-
+        }
     }
 
     print(x: BTreeNode = this.root): void {
@@ -71,24 +65,21 @@ export class BTree {
         }
     }
 
-    delete(key: number): Promise<void> {
-        return new Promise((resolve, reject) => {
-            if (this.root == null) {
-                   reject(new DeleteFromEmpty("Trying to delete key " + key + " from empty tree")); 
-            }
+    delete(key: number): void {
+        if (this.root == null) {
+            throw new DeleteFromEmpty("Trying to delete key " + key + " from empty tree");
+        }
 
-            this.deleteFromTree(this.root, key);
+        this.deleteFromTree(this.root, key);
 
-            if (this.root.n === 0) {
-                if (this.root.leaf) {
-                    // @ts-ignore
-                    this.root = null;
-                } else {
-                    this.root = this.root.c[0];
-                }
+        if (this.root.n === 0) {
+            if (this.root.leaf) {
+                // @ts-ignore
+                this.root = null;
+            } else {
+                this.root = this.root.c[0];
             }
-            resolve();
-        });
+        }
     }
 
     deleteFromTree(treeNode: BTreeNode,key: number): void {
